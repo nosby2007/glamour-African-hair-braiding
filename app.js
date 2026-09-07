@@ -1,5 +1,5 @@
 import { db } from './firebase.js';
-import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, where } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js';
+import { addDoc, collection, getDocs, query, serverTimestamp, where } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js';
 
 const qs = (s) => document.querySelector(s);
 const showStatus = (el, message, ok = true) => { if (!el) return; el.textContent = message; el.className = ok ? 'form-status success' : 'form-status error'; };
@@ -32,7 +32,7 @@ async function loadGallery() {
   const root = qs('#firebase-gallery');
   if (!root) return;
   try {
-    const snap = await getDocs(query(collection(db, COLLECTIONS.gallery), where('published', '==', true), orderBy('createdAt', 'desc')));
+    const snap = await getDocs(query(collection(db, COLLECTIONS.gallery), where('published', '==', true)));
     if (snap.empty) return;
     root.innerHTML = '';
     snap.forEach((doc) => {
@@ -55,7 +55,7 @@ async function loadTestimonials() {
   const root = qs('#testimonials-list');
   if (!root) return;
   try {
-    const snap = await getDocs(query(collection(db, COLLECTIONS.testimonials), where('approved', '==', true), orderBy('createdAt', 'desc')));
+    const snap = await getDocs(query(collection(db, COLLECTIONS.testimonials), where('approved', '==', true)));
     root.innerHTML = '';
     snap.forEach((doc) => {
       const t = doc.data();
