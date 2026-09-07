@@ -1,7 +1,6 @@
-import { auth, db, storage } from './firebase.js';
+import { auth, db } from './firebase.js';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
 import { addDoc, collection, doc, getDoc, getDocs, orderBy, query, serverTimestamp, updateDoc } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js';
-import { getDownloadURL, ref, uploadBytes } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js';
 
 const $ = (s) => document.querySelector(s);
 const loginPanel = $('#login-panel');
@@ -41,9 +40,9 @@ async function loadCollection(name, rootId, renderer) {
 function simpleRecord(type) {
   return (id, data) => {
     const card = document.createElement('article'); card.className = 'admin-card';
-    const title = document.createElement('strong'); title.textContent = data.name || data.email || type;
+    const title = document.createElement('strong'); title.textContent = data.name || data.email || data.styleName || type;
     const meta = document.createElement('p'); meta.textContent = [data.phone, data.email, data.service, data.preferredDate].filter(Boolean).join(' • ');
-    const message = document.createElement('p'); message.textContent = data.message || data.notes || '';
+    const message = document.createElement('p'); message.textContent = data.message || data.notes || data.imageUrl || '';
     card.append(title, meta, message); return card;
   };
 }
@@ -57,19 +56,26 @@ function testimonialRecord(id, data) {
 
 $('#gallery-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const fd = new FormData(e.currentTarget); const file = fd.get('image'); const status = $('#gallery-status');
+  const fd = new FormData(e.currentTarget);
+  const status = $('#gallery-status');
   try {
-    if (!(file instanceof File) || !file.size) throw new Error('Choose an image.');
-    if (!file.type.startsWith('image/')) throw new Error('Only image files are allowed.');
-    if (file.size > 8 * 1024 * 1024) throw new Error('Image must be under 8 MB.');
-    const path = `gallery/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '-')}`;
-    const storageRef = ref(storage, path);
-    await uploadBytes(storageRef, file, { contentType: file.type });
-    const imageUrl = await getDownloadURL(storageRef);
-    await addDoc(collection(db, 'gallery'), { styleName: fd.get('styleName'), alt: fd.get('alt'), imageUrl, storagePath: path, published: true, createdAt: serverTimestamp() });
-    e.currentTarget.reset(); status.textContent = 'Photo published.';
+    const imageUrl = String(fd.get('imageUrl') || '').trim();
+    const url = new URL(imageUrl);
+    if (url.protocol !== 'https:') throw new Error('Use a secure HTTPS image URL.');
+    await addDoc(collection(db, 'gallery'), {
+      styleName: String(fd.get('styleName') || '').trim(),
+      alt: String(fd.get('alt') || '').trim(),
+      imageUrl,
+      provider: 'cloudinary',
+      published: true,
+      createdAt: serverTimestamp()
+    });
+    e.currentTarget.reset();
+    status.textContent = 'Photo published.';
     await refresh();
-  } catch (err) { status.textContent = err.message; }
+  } catch (err) {
+    status.textContent = err.message || 'Could not publish this image.';
+  }
 });
 
 async function refresh() {
