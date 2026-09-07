@@ -4,6 +4,13 @@ import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, where } f
 const qs = (s) => document.querySelector(s);
 const showStatus = (el, message, ok = true) => { if (!el) return; el.textContent = message; el.className = ok ? 'form-status success' : 'form-status error'; };
 
+const COLLECTIONS = {
+  bookings: 'glamour_bookings',
+  contacts: 'glamour_contacts',
+  testimonials: 'glamour_testimonials',
+  gallery: 'glamour_gallery'
+};
+
 async function submitForm(form, collectionName, extra = {}) {
   const status = form.querySelector('.form-status');
   const data = Object.fromEntries(new FormData(form).entries());
@@ -17,15 +24,15 @@ async function submitForm(form, collectionName, extra = {}) {
   }
 }
 
-qs('#booking-form')?.addEventListener('submit', (e) => { e.preventDefault(); submitForm(e.currentTarget, 'bookings', { status: 'new' }); });
-qs('#contact-form')?.addEventListener('submit', (e) => { e.preventDefault(); submitForm(e.currentTarget, 'contacts', { status: 'new' }); });
-qs('#testimonial-form')?.addEventListener('submit', (e) => { e.preventDefault(); submitForm(e.currentTarget, 'testimonials', { approved: false }); });
+qs('#booking-form')?.addEventListener('submit', (e) => { e.preventDefault(); submitForm(e.currentTarget, COLLECTIONS.bookings, { status: 'new' }); });
+qs('#contact-form')?.addEventListener('submit', (e) => { e.preventDefault(); submitForm(e.currentTarget, COLLECTIONS.contacts, { status: 'new' }); });
+qs('#testimonial-form')?.addEventListener('submit', (e) => { e.preventDefault(); submitForm(e.currentTarget, COLLECTIONS.testimonials, { approved: false }); });
 
 async function loadGallery() {
   const root = qs('#firebase-gallery');
   if (!root) return;
   try {
-    const snap = await getDocs(query(collection(db, 'gallery'), where('published', '==', true), orderBy('createdAt', 'desc')));
+    const snap = await getDocs(query(collection(db, COLLECTIONS.gallery), where('published', '==', true), orderBy('createdAt', 'desc')));
     if (snap.empty) return;
     root.innerHTML = '';
     snap.forEach((doc) => {
@@ -48,7 +55,7 @@ async function loadTestimonials() {
   const root = qs('#testimonials-list');
   if (!root) return;
   try {
-    const snap = await getDocs(query(collection(db, 'testimonials'), where('approved', '==', true), orderBy('createdAt', 'desc')));
+    const snap = await getDocs(query(collection(db, COLLECTIONS.testimonials), where('approved', '==', true), orderBy('createdAt', 'desc')));
     root.innerHTML = '';
     snap.forEach((doc) => {
       const t = doc.data();
