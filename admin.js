@@ -6,9 +6,17 @@ const $ = (s) => document.querySelector(s);
 const loginPanel = $('#login-panel');
 const dashboard = $('#dashboard');
 
+const COLLECTIONS = {
+  admins: 'glamour_admins',
+  bookings: 'glamour_bookings',
+  contacts: 'glamour_contacts',
+  testimonials: 'glamour_testimonials',
+  gallery: 'glamour_gallery'
+};
+
 async function isAdmin(user) {
   if (!user) return false;
-  const snap = await getDoc(doc(db, 'admins', user.uid));
+  const snap = await getDoc(doc(db, COLLECTIONS.admins, user.uid));
   return snap.exists();
 }
 
@@ -50,7 +58,7 @@ function simpleRecord(type) {
 function testimonialRecord(id, data) {
   const card = simpleRecord('Testimonial')(id, data);
   const btn = document.createElement('button'); btn.textContent = data.approved ? 'Approved' : 'Approve'; btn.disabled = !!data.approved;
-  btn.onclick = async () => { await updateDoc(doc(db, 'testimonials', id), { approved: true, approvedAt: serverTimestamp() }); await refresh(); };
+  btn.onclick = async () => { await updateDoc(doc(db, COLLECTIONS.testimonials, id), { approved: true, approvedAt: serverTimestamp() }); await refresh(); };
   card.append(btn); return card;
 }
 
@@ -62,7 +70,7 @@ $('#gallery-form')?.addEventListener('submit', async (e) => {
     const imageUrl = String(fd.get('imageUrl') || '').trim();
     const url = new URL(imageUrl);
     if (url.protocol !== 'https:') throw new Error('Use a secure HTTPS image URL.');
-    await addDoc(collection(db, 'gallery'), {
+    await addDoc(collection(db, COLLECTIONS.gallery), {
       styleName: String(fd.get('styleName') || '').trim(),
       alt: String(fd.get('alt') || '').trim(),
       imageUrl,
@@ -80,10 +88,10 @@ $('#gallery-form')?.addEventListener('submit', async (e) => {
 
 async function refresh() {
   await Promise.all([
-    loadCollection('bookings', 'bookings-list', simpleRecord('Booking')),
-    loadCollection('contacts', 'contacts-list', simpleRecord('Contact')),
-    loadCollection('testimonials', 'testimonial-admin-list', testimonialRecord),
-    loadCollection('gallery', 'gallery-admin-list', simpleRecord('Gallery'))
+    loadCollection(COLLECTIONS.bookings, 'bookings-list', simpleRecord('Booking')),
+    loadCollection(COLLECTIONS.contacts, 'contacts-list', simpleRecord('Contact')),
+    loadCollection(COLLECTIONS.testimonials, 'testimonial-admin-list', testimonialRecord),
+    loadCollection(COLLECTIONS.gallery, 'gallery-admin-list', simpleRecord('Gallery'))
   ]);
 }
 
