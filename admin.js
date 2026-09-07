@@ -64,7 +64,8 @@ function testimonialRecord(id, data) {
 
 $('#gallery-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const fd = new FormData(e.currentTarget);
+  const form = e.currentTarget;
+  const fd = new FormData(form);
   const status = $('#gallery-status');
   try {
     const imageUrl = String(fd.get('imageUrl') || '').trim();
@@ -78,7 +79,7 @@ $('#gallery-form')?.addEventListener('submit', async (e) => {
       published: true,
       createdAt: serverTimestamp()
     });
-    e.currentTarget.reset();
+    form.reset();
     status.textContent = 'Photo published.';
     await refresh();
   } catch (err) {
